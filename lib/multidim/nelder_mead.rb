@@ -35,10 +35,12 @@ module Minimization
     attr_reader :f_minimum
     attr_reader :epsilon
 
-    def initialize(f, start_point, iterate_simplex_ref)
-      @epsilon             = EPSILON_DEFAULT
+    def initialize(f, start_point, iterate_simplex_ref,
+                   epsilon: EPSILON_DEFAULT,
+                   max_iterations: MAX_ITERATIONS_DEFAULT)
+      @epsilon             = epsilon
       # Default number of maximum iterations
-      @max_iterations      = MAX_ITERATIONS_DEFAULT
+      @max_iterations      = max_iterations
       # proc which iterates the simplex
       @iterate_simplex_ref = iterate_simplex_ref
       @relative_threshold  = 100 * @epsilon
@@ -71,7 +73,7 @@ module Minimization
     # increment iteration counter by 1
     def increment_iterations_counter
       @iterations += 1
-      raise "iteration limit reached" if @iterations > @max_iterations
+      raise Diverging, "iteration limit reached" if @iterations > @max_iterations
     end
 
     # compares 2 PointValuePair points
@@ -181,8 +183,8 @@ module Minimization
     # == Usage:
     #   minimizer=Minimization::NelderMead.minimize(proc{|x| (x[0] - 1) ** 2 + (x[1] - 5) ** 2}, [0, 0])
     #
-    def self.minimize(f, start_point)
-      min=Minimization::NelderMead.new(f, start_point)
+    def self.minimize(f, start_point, **opts)
+      min=Minimization::NelderMead.new(f, start_point, **opts)
       while min.converging?
         min.iterate
       end
@@ -224,7 +226,7 @@ module Minimization
   #  min.f_minimum
   #
   class NelderMead < DirectSearchMinimizer
-    def initialize(f, start_point)
+    def initialize(f, start_point, **opts)
       # Reflection coefficient
       @rho   = 1.0
       # Expansion coefficient
@@ -233,7 +235,7 @@ module Minimization
       @gamma = 0.5
       # Shrinkage coefficient
       @sigma = 0.5
-      super(f, start_point, proc{iterate_simplex})
+      super(f, start_point, proc{iterate_simplex}, **opts)
     end
     
     def iterate_simplex

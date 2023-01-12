@@ -28,7 +28,12 @@ require_relative 'multidim/powell'
 require 'text-table'
 
 module Minimization
-  FailedIteration=Class.new(Exception)
+  Error = Class.new(Exception)
+  class FailedIteration < Error
+  end
+  class Diverging < Error
+  end
+  
   # Base class for unidimensional minimizers
   class Unidimensional
     # Default value for error on f(x)
